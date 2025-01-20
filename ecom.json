@@ -1,0 +1,52 @@
+[
+    {
+        "name": "Red Shirt",
+        "color": "black",
+        "availability": true,
+        "image_url": "https://pngimg.com/uploads/dress_shirt/dress_shirt_PNG8117.png"
+    },
+    {
+        "name": "Blue Jeans",
+        "color": "white",
+        "availability": true,
+        "image_url": "https://www.nicepng.com/png/full/322-3221158_dress-shirt-png-file-download-free-dress-shirt.png"
+    },
+    {
+        "name": "Green Jacket",
+        "color": "blue",
+        "availability": false,
+        "image_url": "https://freepngimg.com/download/dress_shirt/7-2-dress-shirt-png-hd.png"
+    },
+    {
+        "name": "Yellow Hat",
+        "color": "yellow",
+        "availability": true,
+        "image_url": "https://example.com/yellow_hat.jpg"
+    },
+
+    
+    {
+        "name": "Black Shoes",
+        "color": "black",
+        "availability": true,
+        "image_url": "https://example.com/black_shoes.jpg"
+    },
+    {
+        "name": "White Socks",
+        "color": "white",
+        "availability": false,
+        "image_url": "https://example.com/white_socks.jpg"
+    },
+    {
+        "name": "Gray Hoodie",
+        "color": "gray",
+        "availability": true,
+        "image_url": "https://www.pngall.com/wp-content/uploads/5/Shirt-PNG-Image-File.png"
+    },
+    {
+        "name": "Purple Scarf",
+        "color": "purple",
+        "availability": true,
+        "image_url": "https://freepngimg.com/save/2143-dress-shirt-png-image/920x1190"
+    }
+]
