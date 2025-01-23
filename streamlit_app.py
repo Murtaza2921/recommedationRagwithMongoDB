@@ -16,6 +16,7 @@ st.markdown(
         right: 0;
         background-color: white;
         padding: 10px;
+        margin-top:20px;
         border-bottom: 1px solid #ddd;
         z-index: 1000;
     }
@@ -32,7 +33,7 @@ st.markdown(
     }
     /* Scrollable chat history */
     .chat-history {
-        height: calc(100vh - 200px);  /* Adjust height based on screen size */
+        height: calc(60vh - 200px);  /* Adjust height based on screen size */
         overflow-y: auto;
         padding: 10px;
         margin-top: 80px;  /* Space for the sticky title */
@@ -112,20 +113,28 @@ with st.container():
             st.markdown(f"<div class='bot-message'><b>Bot:</b> {message['content']}</div>", unsafe_allow_html=True)
             if "products" in message and message["products"]:
                 for product in message["products"]:
-                    availability_class = "availability-available" if product["availability"] else "availability-out-of-stock"
-                    availability_text = "Available" if product["availability"] else "Out of stock"
-                    with st.expander(f"📦 {product['name']}", expanded=True):
+                    availability_class = "availability-available" if not product["out_of_stock"] else "availability-out-of-stock"
+                    availability_text = "Available" if not product["out_of_stock"] else "Out of stock"
+                    with st.expander(f"📦 {product['title']}", expanded=True):
                         st.markdown(
                             f"""
                             <div class="product-card">
-                                <h4>{product['name']}</h4>
+                                <h4>{product['title']}</h4>
+                                <p><b>Brand:</b> {product['brand']}</p>
+                                <p><b>Category:</b> {product['category']}</p>
+                                <p><b>Sub-Category:</b> {product['sub_category']}</p>
+                                <p><b>Description:</b> {product['description']}</p>
                                 <p><b>Color:</b> {product['color']}</p>
+                                <p><b>Selling Price:</b> {product['selling_price']}</p>
+                                <p><b>Actual Price:</b> {product['actual_price']}</p>
+                                <p><b>Discount:</b> {product['discount']}</p>
                                 <p><b>Availability:</b> <span class="{availability_class}">{availability_text}</span></p>
+                                <p><b>Average Rating:</b> {product['average_rating']}</p>
                             """,
                             unsafe_allow_html=True,
                         )
-                        if product.get("image_url"):  # Display image if available
-                            st.image(product["image_url"], width=200)
+                        if product.get("images"):  # Display the first image if available
+                            st.image(product["images"][0], width=200)
                         else:
                             st.write("**Image:** Not available")
     st.markdown("</div>", unsafe_allow_html=True)
@@ -166,7 +175,8 @@ if st.button("Send"):
 
         # Clear the input field and refresh
         user_query = ""
-        st.experimental_rerun()
+        st.rerun()
+
     else:
         st.warning("Please enter a query before sending.")
 st.markdown("</div>", unsafe_allow_html=True)
