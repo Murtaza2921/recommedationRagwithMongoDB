@@ -21,7 +21,7 @@ db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
 
-groq_chat = ChatGroq(temperature=0, model_name="mixtral-8x7b-32768")
+groq_chat = ChatGroq(temperature=0.5, model_name="mixtral-8x7b-32768")
 
 # Define the request model
 class SearchRequest(BaseModel):
@@ -69,6 +69,9 @@ def format_price_in_filter(filter_query):
                         format_price_in_filter(item)
     return filter_query
 
+
+
+
 @app.post("/search")
 async def search_product(search_request: SearchRequest):
     query = search_request.query  # Extract the query from the request body
@@ -86,6 +89,17 @@ async def search_product(search_request: SearchRequest):
     try:
         # Apply filter and projection
         products = collection.find(filter_query, projection)
+
+        # Apply sorting (if specified in the query)
+        if "sort" in query.lower():
+            products = products.sort("average_rating", -1)  # Sort by average_rating in descending order
+
+        # Apply limit (if specified in the query)
+        if "top" in query.lower() or "limit" in query.lower():
+            limit_match = re.search(r"top\s+(\d+)", query, re.IGNORECASE)
+            if limit_match:
+                limit = int(limit_match.group(1))
+                products = products.limit(limit)
 
         # Convert the cursor to a list of products
         product_list = [
@@ -110,8 +124,7 @@ async def search_product(search_request: SearchRequest):
 
         if not product_list:
             raise HTTPException(status_code=404, detail="No products found")
-
-        # Limit to the top 5 results if the list has more than 5 items
+        
         top_products = product_list[:5]
 
         # Format the response in a human-like way
@@ -127,10 +140,13 @@ async def search_product(search_request: SearchRequest):
         return {"message": response_message, "products": top_products}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error querying the database: {str(e)}")
-
+ 
 def query_groq(user_query: str):
+    """
+    Use ChatGroq to interpret the user query and generate a MongoDB query.
+    """
     try:
-        # Prepare the prompt for the OpenAI model
+        # Prepare the prompt for the Groq model
         prompt = PromptTemplate(
             input_variables=["user_query"],
             template=(
@@ -153,6 +169,7 @@ def query_groq(user_query: str):
                 "  - sub_category (String)\n"
                 "  - title (String)\n"
                 "  - url (String)\n"
+                "  - out_of_stock (boolean)\n"
                 
                 "Generate a MongoDB query that:\n"
                 "- Applies filters on the fields based on the user query.\n"
@@ -178,10 +195,13 @@ def query_groq(user_query: str):
 
         # Run the chain with the user query
         response = chain.invoke(user_query)
-        print(f"OpenAI Response: {response}")  # Log the response
+        print(f"Groq Response: {response}")  # Log the response
 
         # Extract the content from the AIMessage object
         response_text = response.content
+
+        # Replace escaped underscores with regular underscores
+        response_text = response_text.replace("\\_", "_")
 
         # Use regex to extract the JSON object from the response
         json_match = re.search(r"\{.*\}", response_text, re.DOTALL)
@@ -195,13 +215,19 @@ def query_groq(user_query: str):
             query_dict = json.loads(json_str)
             filter_query = query_dict.get("filter", {})
             projection = query_dict.get("projection", {})
+
+            # Remove invalid keys like $limit and $sort from the filter
+            if "$limit" in filter_query:
+                del filter_query["$limit"]
+            if "$sort" in filter_query:
+                del filter_query["$sort"]
+
             return filter_query, projection
         except json.JSONDecodeError as e:
             raise ValueError(f"Failed to parse MongoDB query from response: {json_str}")
     except Exception as e:
-        print(f"OpenAI Error: {e}")
-        raise HTTPException(status_code=500, detail=f"Error processing query with OpenAI: {str(e)}")
-    
+        print(f"Groq Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error processing query with Groq: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
